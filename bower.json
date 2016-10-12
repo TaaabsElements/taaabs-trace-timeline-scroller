@@ -1,0 +1,29 @@
+{
+  "name": "taaabs-trace-timeline-scroller",
+  "version": "0.1.0",
+  "description": "A graphical timeline. It's supposed to work in pair with one or several taaabs-trace-timeline.",
+  "keywords": [
+    "web-components",
+    "polymer",
+    "taaabs"
+  ],
+  "authors": [
+    "Rémi Casado"
+  ],
+  "repository": {
+   "type": "git",
+   "url": "https://github.com/TaaabsElements/taaabs-trace-timeline-scroller.git"
+  },
+  "main": "taaabs-trace-timeline-scroller.html",
+  "license": "https://github.com/TaaabsElements/taaabs-trace-timeline-scroller/LICENSE",
+  "dependencies": {
+    "polymer": "polymer/polymer#^1.0.0",
+    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior",
+    "pixi-js-component":"https://github.com/Yepikae/pixi-js-component.git"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "ignore": []
+}
