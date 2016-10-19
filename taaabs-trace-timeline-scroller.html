@@ -459,6 +459,9 @@
             // Calculate the new positions
             this.position.x = that._getCursorCorrectPosition(0, pixijsWidth - this.width, currentPosition - dragOriginPosition);
             that._setCursorsPosition(this.position.x, this.position.x + this.width);
+            // Fire global moved event
+            that._setZLPointers(this.position.x, this.position.x + this.width);
+            that.fire('zlGlobalMoved');
           }
         });
         // Function for both mouseup and mouseupoutside
@@ -525,6 +528,9 @@
             // Calculate the new positions
             this.position.x = that._getCursorCorrectPosition(0, endPosition, currentPosition);
             that._setCursorsPosition(this.position.x, endPosition);
+            // Fire being moved event
+            that._setZLPointers(this.position.x, endPosition);
+            that.fire('zlBeginMoved');
           }
         });
         // Function for both mouseup and mouseupoutside
@@ -593,6 +599,9 @@
             // Calculate the new positions
             this.position.x = that._getCursorCorrectPosition(beginPosition, pixijsWidth, currentPosition);
             that._setCursorsPosition(beginPosition, this.position.x);
+            // Fire end moved event
+            that._setZLPointers(beginPosition, this.position.x);
+            that.fire('zlEndMoved');
           }
         });
         // Function for both mouseup and mouseupoutside
