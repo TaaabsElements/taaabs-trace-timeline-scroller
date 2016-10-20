@@ -693,13 +693,14 @@
         var _time_interval = ((this._tlEnd - this._tlBegin) / _ms) / _interval_count;
 
         // TIME INTERVALS
+        var _seconds_in_seconds = 1;
         var _seconds_in_minute = 60;
         var _seconds_in_hour = 60 * 60;
         var _seconds_in_day = 60 * 60 * 24;
         var _seconds_in_week = 60 * 60 * 24 * 7;
         var _seconds_in_month = 60 * 60 * 24 * (365.25 / 12);
         var _seconds_in_year = 60 * 60 * 24 * 365.25;
-        var _seconds_in_ = [_seconds_in_year, _seconds_in_month, _seconds_in_week, _seconds_in_day, _seconds_in_hour, _seconds_in_minute];
+        var _seconds_in_ = [_seconds_in_year, _seconds_in_month, _seconds_in_week, _seconds_in_day, _seconds_in_hour, _seconds_in_minute, _seconds_in_seconds];
 
         var i = 0;
         while (i < _seconds_in_.length && _time_interval / _seconds_in_[i] < 1)
