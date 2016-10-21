@@ -447,6 +447,11 @@
           this.dragging = true;
           // The drag origin position
           this._deltaPos = this.data.getLocalPosition(this.parent).x - this.position.x;
+
+          var new_date = Date.now();
+          this.doubleClick = (new_date - that._lastClickTime < 300);
+          that.set('_lastClickTime', Date.now());
+
         });
         // Set event on mousemove
         // Makes the slider move.
@@ -467,12 +472,18 @@
         // Function for both mouseup and mouseupoutside
         function mouseupFunc() {
           if (this.dragging) {
-            // Clearer variables.
-            var pixijsWidth = that._getWidth();
-            var dragOriginPosition = this._deltaPos;
-            var currentPosition = this.data.getLocalPosition(this.parent).x;
-            // Calculate the new positions
-            this.position.x = that._getCursorCorrectPosition(0, pixijsWidth - this.width, currentPosition - dragOriginPosition);
+            if(this.doubleClick){
+              this.position.x = 0;
+              this.width = that._getWidth();
+            }
+            else{
+              // Clearer variables.
+              var pixijsWidth = that._getWidth();
+              var dragOriginPosition = this._deltaPos;
+              var currentPosition = this.data.getLocalPosition(this.parent).x;
+              // Calculate the new positions
+              this.position.x = that._getCursorCorrectPosition(0, pixijsWidth - this.width, currentPosition - dragOriginPosition);
+            }
             that._setCursorsPosition(this.position.x, this.position.x + this.width);
             // Ends dragging status
             this.dragging = false;
