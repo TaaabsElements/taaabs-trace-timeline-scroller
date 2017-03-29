@@ -1,5 +1,8 @@
-<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
 <link rel="import" href="../pixi-js-component/pixi-js-component.html">
+<link rel="import" href="../taaabs-time-utilities/taaabs-time-utilities.html">
+
+
 <dom-module id="taaabs-trace-timeline-scroller">
   <template>
     <style>
@@ -17,28 +20,54 @@
       is: 'taaabs-trace-timeline-scroller',
 
       /**
-       * Fired if the `begin` slider of the ZoomLine has been moved.
-       * Fired when mouseup.
+       * {b: BEGIN_TIME, e:END_TIME}
        *
-       * @event zlBeginMoved
-       */
-
-      /**
-       * Fired if the `end` slider of the ZoomLine has been moved.
-       * Fired when mouseup.
-       *
-       * @event zlEndMoved
-       */
-
-      /**
-       * Fired if the whole slider of the ZoomLine has been moved.
-       * Fired when mouseup.
-       *
-       * @event zlGlobalMoved
+       * @event timeline-scroller-new-bounds
        */
 
       properties: {
 
+        // MARK: p: begin
+        /**
+         * Begin time of the trace.
+         *
+         * @attribute begin
+         * @type Number
+         */
+        begin: {
+          type: Number,
+          notify: false,
+          value: null
+        },
+
+        // MARK: p: end
+        /**
+         * End time of the trace.
+         *
+         * @attribute end
+         * @type Number
+         */
+        end: {
+          type: Number,
+          notify: false,
+          value: null
+        },
+
+        // MARK: p: format
+        /**
+         * Format of the time.
+         * Can be "millisecond" or "sequence".
+         *
+         * @attribute format
+         * @type String
+         */
+        format: {
+          type: String,
+          notify: true,
+          value: "millisecond"
+        },
+
+        // MARK: p: openGl
         /**
          * True, uses an OpenGL renderer.
          * False, uses a simple canvas.
@@ -52,56 +81,238 @@
           value: false
         },
 
+        // MARK: p: _backgroundColor
         /**
-         * List of graduations.
-         * This array purpose is to pass the graduation positions to a taaabs-trace-timeline-visu.
+         * Background color or the pixijs component.
          *
-         * @attribute grad
+         * @attribute _backgroundColor
+         * @type Number
+         */
+        _backgroundColor: {
+          type: Number,
+          value: 0x263238
+        },
+
+        // MARK: p: _endTileSelectedIndex
+        /**
+         * Index of the last tile selected in `_intervals`.
+         *
+         * @attribute _endTileSelectedIndex
+         * @type Number
+         */
+        _endTileSelectedIndex: {
+          type: Number,
+          value: -1
+        },
+
+        // MARK: p: _height
+        /**
+         * Height of the pixijs component.
+         *
+         * @attribute _height
+         * @type Number
+         */
+        _height: {
+          type: Number,
+          value: 65
+        },
+
+        // MARK: p: _intervalTileHeight
+        /**
+         * Height of a tile of `_intervals`.
+         *
+         * @attribute _intervalTileHeight
+         * @type Number
+         */
+        _intervalTileHeight: {
+          type: Number,
+          value: 24
+        },
+
+        // MARK: p: _intervals
+        /**
+         * List of the timeline tiles.
+         *
+         * @attribute _intervals
          * @type Array
          */
-        grad: {
+        _intervals: {
           type: Array,
-          notify: true,
           value: []
         },
 
+        // MARK: p: _isBeingSelected
         /**
-         * Begin time of the trace.
+         * True if a user is selecting (sliding over) the tiles of `intervals`.
+         * False otherwise.
          *
-         * @attribute begin
+         * @attribute _isBeingSelected
+         * @type Boolean
+         */
+        _isBeingSelected: {
+          type: Boolean,
+          value: false
+        },
+
+        // MARK: p: _lastHoverTileIndex
+        /**
+         * Index of the last `_intervals` tile to be hovered.
+         *
+         * @attribute _lastHoverTileIndex
          * @type Number
          */
-        begin: {
+        _lastHoverTileIndex: {
           type: Number,
-          notify: false,
-          value: null
+          value: -1
         },
 
+        // MARK: p: _lastHoverTime
         /**
-         * End time of the trace.
+         * Last time the user hovered an '\intervals` tile . Date.now()
          *
-         * @attribute end
+         * @attribute _lastHoverTime
          * @type Number
          */
-        end: {
+        _lastHoverTime: {
           type: Number,
-          notify: false,
-          value: null
+          value: 0
         },
 
+        // MARK: p: _lastLeaveTileIndex
         /**
-         * Format of the time.
-         * Can be "DATE" or "ORDER".
+         * Index of the last `_intervals` tile to be left.
          *
-         * @attribute format
-         * @type String
+         * @attribute _lastLeaveTileIndex
+         * @type Number
          */
-        format: {
-          type: String,
-          notify: true,
-          value: "DATE"
+        _lastLeaveTileIndex: {
+          type: Number,
+          value: -1
         },
 
+        // MARK: p: _lastLeaveTime
+        /**
+         * Last time the user left an '\intervals` tile . Date.now()
+         *
+         * @attribute _lastLeaveTime
+         * @type Number
+         */
+        _lastLeaveTime: {
+          type: Number,
+          value: 0
+        },
+
+        // MARK: p: _startTileSelectedIndex
+        /**
+         * First tile to be selected by the user when he's sliding over '_intervals'.
+         *
+         * @attribute _startTileSelectedIndex
+         * @type Number
+         */
+        _startTileSelectedIndex: {
+          type: Number,
+          value: -1
+        },
+
+        // MARK: p: _timelineBegin
+        /**
+         * Begin time of the timeline.
+         *
+         * @attribute _timelineBegin
+         * @type Number
+         */
+        _timelineBegin: {
+          type: Number,
+          value: 0
+        },
+
+        // MARK: p: _timelineContainer
+        /**
+        * PIXI.Container of the timeline.
+        *
+        * @attribute _timelineContainer
+        * @type Object
+        */
+        _timelineContainer: {
+         type: Object,
+         value: null
+        },
+
+        // MARK: p: _timelineContainerHeight
+        /**
+        * Height of `_timelineContainer`.
+        *
+        * @attribute _timelineContainerHeight
+        * @type Number
+        */
+        _timelineContainerHeight: {
+         type: Number,
+         value: 35
+        },
+
+        // MARK: p: _timelineContainerWidth
+        /**
+        * Width of `_timelineContainer`.
+        *
+        * @attribute _timelineContainerWidth
+        * @type Number
+        */
+        _timelineContainerWidth: {
+         type: Number,
+         value: 16
+        },
+
+        // MARK: p: _timelineContainers
+        /**
+        * List of the timeline containers, i.e the ruler lines of the timeline.
+        *
+        * @attribute _timelineContainers
+        * @type Array
+        */
+        _timelineContainers: {
+         type: Array,
+         value: []
+        },
+
+        // MARK: p: _timelineEnd
+        /**
+         * End time of the timeline.
+         *
+         * @attribute _timelineEnd
+         * @type Number
+         */
+        _timelineEnd: {
+          type: Number,
+          value: 0
+        },
+
+        // MARK: p: _timelineTextContainer
+        /**
+        * PIXI.Container of the timeline texts.
+        *
+        * @attribute _timelineTextContainer
+        * @type Object
+        */
+        _timelineTextContainer: {
+         type: Object,
+         value: null
+        },
+
+        // MARK: p: _ttu
+        /**
+        * TaaabsTimeUtilities.
+        *
+        * @attribute _ttu
+        * @type Object
+        */
+        _ttu: {
+          type: Object,
+          value: function() {
+            return new TaaabsTimeUtilities();
+          }
+        },
+
+        // MARK: p: _width
         /**
          * Width of the pixijs component.
          *
@@ -112,164 +323,6 @@
           type: Number,
           notify: true,
           value: 0
-        },
-
-        /** ZOOM LINE PARAMETERS **/
-
-        /**
-         * Position and size of the zoomline container.
-         *
-         * @attribute _zlBoundaries
-         * @type Object
-         */
-        _zlBoundaries: {
-          type: Object,
-          notify: true,
-          value: function() {
-            return {
-              x: 0,
-              y: 36,
-              h: 19,
-              w: 100
-            };
-          }
-        },
-
-        /**
-         * The `begin` pointer of the ZoomLine.
-         *
-         * @attribute _zlBegin
-         * @type Number
-         */
-        _zlBegin: {
-          type: Number,
-          nofity: true,
-          value: 0
-        },
-
-        /**
-         * The `end` pointer of the ZoomLine.
-         *
-         * @attribute _zlEnd
-         * @type Number
-         */
-        _zlEnd: {
-          type: Number,
-          nofity: true,
-          value: 0
-        },
-
-        /**
-         * Main Pixi.Container of the ZoomLine.
-         *
-         * @attribute _zlContainer
-         * @type Object
-         */
-        _zlContainer: {
-          type: Object,
-          notify: true,
-          value: function() {
-            return {};
-          }
-        },
-
-        /**
-         * Pixi.Graphics begin slider of the ZoomLine.
-         *
-         * @attribute _zlLeft
-         * @type Object
-         */
-        _zlLeft: {
-          type: Object,
-          notify: true,
-          value: function() {
-            return {};
-          }
-        },
-
-        /**
-         * Pixi.Graphics end slider of the ZoomLine.
-         *
-         * @attribute _zlRight
-         * @type Object
-         */
-        _zlRight: {
-          type: Object,
-          notify: true,
-          value: function() {
-            return {};
-          }
-        },
-
-        /**
-         * Pixi.Graphics whole slider of the ZoomLine.
-         *
-         * @attribute _zlCenter
-         * @type Object
-         */
-        _zlCenter: {
-          type: Object,
-          notify: true,
-          value: function() {
-            return {};
-          }
-        },
-
-        /** TIME LINE PARAMETERS **/
-
-        /**
-         * Position and size of the timeline container.
-         *
-         * @attribute _tlBoundaries
-         * @type Object
-         */
-        _tlBoundaries: {
-          type: Object,
-          notify: true,
-          value: function() {
-            return {
-              y: 0,
-              h: 35
-            };
-          }
-        },
-
-        /**
-         * Main Pixi.Container of the TimeLine.
-         *
-         * @attribute _tlContainer
-         * @type Object
-         */
-        _tlContainer: {
-          type: Object,
-          notify: true,
-          value: function() {
-            return {};
-          }
-        },
-
-        /**
-         * The end of the TimeLine.
-         *
-         * @attribute _tlEnd
-         * @type Number
-         */
-        _tlEnd: {
-          type: Number,
-          notify: true,
-          value: 20
-        },
-
-        /**
-         * The beginning of the TimeLine.
-         *
-         * @attribute _tlBegin
-         * @type Number
-         */
-        _tlBegin: {
-          type: Number,
-          notify: true,
-          value: 20
         }
       },
 
@@ -279,15 +332,16 @@
 
       attached: function() {},
 
+      // MARK: f: initVisu
       /**
        * Initialize the visualization.
        *
        * @method initVisu
        */
       initVisu: function() {
-        this.$.pixijs.set('height', 55);
+        this.$.pixijs.set('height', this._height);
         this.$.pixijs.init({
-          backgroundColor: 0x2E3842,
+          backgroundColor: this._backgroundColor,
           antialias: true
         });
         // Listen to pixi resize.
@@ -296,6 +350,294 @@
         this._initZoomLine();
         this._initTimeLine();
       },
+
+      /** ----------------------------------------------------------------------
+      // MARK: Functions : Zoomline
+      **/
+
+      // MARK: f: _createZoomLineTile
+      _createZoomLineTile: function(index) {
+        // Util vars.
+        // w <- width of the tile; y <- position of the tile; h <- height of the tile
+        var w = this._width / this._intervals.length;
+        var y = this._height - this._intervalTileHeight;
+        var h = this._intervalTileHeight;
+        // Creation of the main container
+        //
+        // Bounds
+        var tile = new PIXI.Container();
+        tile.x = index * w;
+        tile.y = y;
+        tile.width = w;
+        tile.height = h;
+        tile._intervalIndex = index;
+        //Interactiity
+        tile.interactive = true;
+        tile.buttonMode = true;
+        tile.hitArea = new PIXI.Rectangle(0, 0, w, h);
+        // On mouse over :
+        // I.   _lastHoverTileIndex <- the tile index & _lastHoverTime -> Date.now()
+        //
+        // II.  If _isBeingSelected, set in onMouseDown & onMouseUp & onMouseUpOutside
+        //   .1.  We fill all the selecting tile with blue, selected tile with light-blue & reste with black.
+        //
+        // III. If we're not selecting any tile, and if the tile is not selected, with hightlight it.
+        function onMouseOver(component, evt) {
+          // I.
+          component.set('_lastHoverTileIndex', this._intervalIndex);
+          component.set('_lastHoverTime', Date.now());
+          // II.
+          if (component._isBeingSelected) {
+            var s = component._startTileSelectedIndex;
+            var e = this._intervalIndex;
+            // If the user selected from right to left, we invert indexes.
+            if (s > e) {
+              s = e;
+              e = component._startTileSelectedIndex;
+            }
+            // For each tile, we fill witht he right color
+            var l = component._intervals;
+            for (var i = 0; i < l.length; i++) {
+              if (i >= s && i <= e) {
+                component._color_tile_selecting(l[i].c);
+              } else if (l[i].c._isSelected) {
+                component._color_tile_selected(l[i].c);
+              } else {
+                component._color_tile_default(l[i].c);
+              }
+            }
+          }
+          // III.
+          else if (this._isSelected) {} else {
+            component._color_tile_hovered(this);
+          }
+        }
+        tile.mouseover = onMouseOver.bind(tile, this);
+        // On mouse out :
+        // I.   _lastLeaveTileIndex <- the tile index & _lastLeaveTime -> Date.now()
+        // II.  If we're not selecting any tile and the tile is not selected, we turn it to black.
+        function onMouseOut(component, evt) {
+          // I.
+          component.set('_lastLeaveTileIndex', this._intervalIndex);
+          component.set('_lastLeaveTime', Date.now());
+          // II.
+          if (component._isBeingSelected) {} else if (this._isSelected) {} else {
+            component._color_tile_default(this);
+          }
+        }
+        tile.mouseout = onMouseOut.bind(tile, this);
+        // On mouse down :
+        // I. _isBeingSelected <- true; _startTileSelectedIndex <- the tile index;
+        function onMouseDown(component, evt) {
+          // I.
+          component.set('_isBeingSelected', true);
+          component.set('_startTileSelectedIndex', this._intervalIndex);
+          component._color_tile_selecting(this);
+        }
+        tile.mousedown = onMouseDown.bind(tile, this);
+        // On mouse up
+        // I. If we are currently selecting some tiles & the tile is the same as the start tile
+        // I.1. _isBeingSelected <- false; _startTileSelectedIndex & _endTileSelectedIndex <- the tile index
+        // I.2. Set the tile to _selected, and all the others to not selected. Fill with right color.
+        // I.3. Calls _intervalTileSelected;
+        function onMouseUp(component, evt) {
+          // I.
+          if (component._isBeingSelected && this._intervalIndex === component._startTileSelectedIndex) {
+            // I.1.
+            component.set('_isBeingSelected', false);
+            component.set('_startTileSelectedIndex', this._intervalIndex);
+            component.set('_endTileSelectedIndex', this._intervalIndex);
+            // I.2.
+            var s = this._intervalIndex;
+            var e = s;
+            var l = component._intervals;
+            for (var i = 0; i < l.length; i++) {
+              if (i !== e) {
+                l[i].c._isSelected = false;
+                component._color_tile_default(l[i].c);
+              } else {
+                l[i].c._isSelected = true;
+                component._color_tile_selected(l[i].c);
+              }
+            }
+            // I.3.
+            component._intervalTileSelected([component._intervals[this._intervalIndex]]);
+          }
+        }
+        tile.mouseup = onMouseUp.bind(tile, this);
+        // On mouse up outside
+        // I. If we're currently selecting and the tile is not the same as the start tile.
+        // I.1. _isBeingSelected <- false
+        // I.2. If we didn't leave outside the tiles
+        // I.2.1. We reorder the start and end (if user goes from right to left)
+        // I.2.2. For each tile, we set as selected those who are between the first and last tile selected. We also fill with right color.
+        // I.2.3. We call _intervalTileSelected;
+        // I.3 IF we leave outside the tiles, we reset the tiles with previous selected colors.
+        function onMouseUpOutside(component, evt) {
+          // I.
+          if (component._isBeingSelected && this._intervalIndex === component._startTileSelectedIndex) {
+            // I.1.
+            component.set('_isBeingSelected', false);
+            var l = component._intervals;
+            var i = 0;
+            // I.2.
+            if (component._lastHoverTileIndex !== component._lastLeaveTileIndex || component._lastHoverTime > component._lastLeaveTime) {
+              // I.2.1.
+              if (component._lastHoverTileIndex < component._startTileSelectedIndex) {
+                component.set('_endTileSelectedIndex', component.get('_startTileSelectedIndex'));
+                component.set('_startTileSelectedIndex', component._lastHoverTileIndex);
+              } else {
+                component.set('_endTileSelectedIndex', component._lastHoverTileIndex);
+              }
+              // I.2.2.
+              var s = component._startTileSelectedIndex;
+              var e = component._endTileSelectedIndex;
+              var is = [];
+              for (i = 0; i < l.length; i++) {
+                if (i >= s && i <= e) {
+                  l[i].c._isSelected = true;
+                  component._color_tile_selected(l[i].c);
+                  is.push(l[i]);
+                } else {
+                  l[i].c._isSelected = false;
+                  component._color_tile_default(l[i].c);
+                }
+              }
+              // I.2.3.
+              component._intervalTileSelected(is);
+            }
+            // I.3.
+            else {
+              for (i = 0; i < l.length; i++) {
+                if (l[i].c._isSelected) {
+                  component._color_tile_selected(l[i].c);
+                } else {
+                  component._color_tile_default(l[i].c);
+                }
+              }
+            }
+          }
+        }
+        tile.mouseupoutside = onMouseUpOutside.bind(tile, this);
+        // Create fill rectangle
+        //
+        var g = new PIXI.Graphics();
+        g.beginFill(0x263238);
+        g.lineStyle(1, 0xFFFFFF, 0.87);
+        g.drawRect(0, 0, w, h);
+        g.endFill();
+        // Create inner text
+        //
+        var fs = h / 2;
+        var t = new PIXI.Text(
+          this._intervals[index].n, {
+            fontFamily: "Arial",
+            fontSize: fs,
+            fill: 0xFFFFFF,
+            align: "center"
+          }
+        );
+        t.alpha = 0.87;
+        var x = (w - t.width) / 2;
+        t.position.set(x, (h - 4) / 4);
+        // Add children to tile
+        //
+        tile.addChild(g);
+        tile.addChild(t);
+        return tile;
+      },
+
+      // MARK: f: _color_tile_hovered
+      _color_tile_hovered: function(tile) {
+        this._color_tile(tile, 0x37474F, null, 1);
+      },
+
+      // MARK: f: _color_tile_selected
+      _color_tile_selected: function(tile) {
+        this._color_tile(tile, 0x039BE5, null, 1);
+      },
+
+      // MARK: f: _color_tile_selecting
+      _color_tile_selecting: function(tile) {
+        this._color_tile(tile, 0x01579B, null, 1);
+      },
+
+      // MARK: f: _color_tile_default
+      _color_tile_default: function(tile) {
+        this._color_tile(tile, 0x263238, null, 0.87);
+      },
+
+      // MARK: f: _color_tile
+      _color_tile: function(tile, color, textcolor, textalpha) {
+        // Get the rect
+        var g = tile.getChildAt(0);
+        g.beginFill(color);
+        g.lineStyle(1, 0xFFFFFF, 0.87);
+        g.drawRect(0, 0, g.width - 1, g.height - 1);
+        g.endFill();
+        // Get the text
+        var t = tile.getChildAt(1);
+        t.alpha = textalpha;
+      },
+
+      // MARK: f: _initZoomLine
+      _initZoomLine: function() {
+        // Retrieve the fitest period.
+        var period = this._ttu.get_fittest_period(this.begin, this.end, 20);
+        console.log(period);
+        // Retrieve the intervals.
+        var intervals = this._retrieveAllMainIntervals(period);
+        console.log(intervals);
+        var w = this._width / intervals.length;
+        this.set('_intervals', intervals);
+        for (var i = 0; i < intervals.length; i++) {
+          intervals[i].c = this._createZoomLineTile(i);
+          this.$.pixijs.addToStage(intervals[i].c);
+        }
+      },
+
+      _retrieveAllMainIntervals: function(p) {
+        // We set the variables
+        var b = this.begin;
+        var e = this.end;
+        var d = new Date(b);
+        d = this._ttu.get_date_according_to_period(p, d);
+        // We reset the _ttu repeater
+        this._ttu.set('beginDate', d);
+        this._ttu.set('interval', p);
+        this._ttu.resetIntervalRepeater();
+        // Result will define the bounds of every interval we create.
+        var result = {
+          'begin': d,
+          'end': d
+        };
+        var intervals = [];
+        // We create the intervals in a loop until we reach the end of the trace.
+        while (result.end.valueOf() < e) {
+          result = this._ttu.getNextIntervalUTC(null);
+          intervals.push({
+            "n": this._ttu.get_human_readable_interval(result.begin, result.end, p),
+            "b": result.begin,
+            "e": result.end
+          });
+        }
+        return intervals;
+      },
+
+      _intervalTileSelected: function(list) {
+        var b = list[0].b;
+        var e = list[list.length - 1].e;
+        this.updateVisu(b, e);
+
+        this.fire("timeline-scroller-new-bounds", {
+          "b": b.valueOf(),
+          "e": e.valueOf()
+        });
+      },
+
+      /** ----------------------------------------------------------------------
+      // MARK: Functions: OLD functions
+      **/
 
       /**
        * Change `_width` according to the pixi width.
@@ -327,516 +669,186 @@
        * @method updateVisu
        */
       updateVisu: function(begin, end) {
-        // Set the pointer times.
-        this.set('_zlBegin', begin);
-        this.set('_zlEnd', end);
-        // Set the cursor position & size.
-        this._setCursorsPositionFromTime(begin, end);
-
-        // TODO Finir
-
-        this._tlBegin = begin;
-        this._tlEnd = end;
-        this.tlFormat();
-
+        this.set('_timelineBegin', begin);
+        this.set('_timelineEnd', end);
+        //this.tlFormat();
+        this._initTimelineContainers();
+        this._fillTimelineContainers();
       },
 
-      /** ZOOM LINE FUNCTIONS **/
 
-      /**
-       * Initialize the ZoomLine.
-       *
-       * @method _initZoomLine
-       */
-      _initZoomLine: function() {
-        // Create the zoomLine container
-        this._zlContainer = this.$.pixijs.createContainer();
-        this._zlContainer.height = this._zlBoundaries.h;
-        this._zlContainer.width = this._zlBoundaries.w;
-        this.$.pixijs.addToStage(this._zlContainer);
-        // Initialize each cursor
-        this._initZlCenter();
-        this._initZlLeft();
-        this._initZlRight();
-      },
-
-      /**
-       * Set the cursors positions & size.
-       *
-       * @param {!required} left (Number) The left cursor position.
-       * @param {!required} right (Number) The right cursor position.
-       *
-       * @method _setCursorsPosition
-       */
-      _setCursorsPosition: function(left, right) {
-        this._zlLeft.position.x = left;
-        this._zlCenter.position.x = left;
-        this._zlCenter.width = right - left;
-        this._zlRight.position.x = right;
-      },
-
-      /**
-       * Check if a cursor position is in between boundaries.
-       * Returns the "correct" position of the cursor.
-       *
-       * @param {!required} min (Number) The minimal position.
-       * @param {!required} max (Number) The maximal position.
-       * @param {!required} position (Number) The current position of the cursor.
-       *
-       * @method _getCursorCorrectPosition
-       */
-      _getCursorCorrectPosition: function(min, max, position) {
-        if (position < min) return min;
-        if (position > max) return max;
-        else return position;
-      },
-
-      /**
-       * Set time pointers for the left and right cursors.
-       *
-       * @param {!required} left (Number) The left cursor position.
-       * @param {!required} right (Number) The right cursor position.
-       *
-       * @method _setZLPointers
-       */
-      _setZLPointers: function(left, right) {
-        this._zlBegin = Math.floor((this.end - this.begin) / (this._getWidth() - 0) * (left - 0) + this.begin);
-        this._zlEnd = Math.floor((this.end - this.begin) / (this._getWidth() - 0) * (right - 0) + this.begin);
-      },
-
-      /**
-       * Set the cursors positions & size according to a begin and an end time.
-       *
-       * @param {!required} begin (Number) The begin time (for left cursor).
-       * @param {!required} end (Number) The end time (for right cursor).
-       *
-       * @method _setCursorsPositionFromTime
-       */
-      _setCursorsPositionFromTime: function(begin, end) {
-        var left = ((this._getWidth() - 0) / (this.end - this.begin)) * (begin - this.begin) + 0;
-        var right = ((this._getWidth() - 0) / (this.end - this.begin)) * (end - this.begin) + 0;
-        this._setCursorsPosition(left, right);
-      },
-
-      /**
-       * Initialize '_zlCenter'.
-       * Set the behaviors on mouse events.
-       *
-       * @method _initZlCenter
-       */
-      _initZlCenter: function() {
-        // Create the slider graphics and set it.
-        this._zlCenter = this.$.pixijs.createRectangleFill(
-          this._zlBoundaries.x,
-          this._zlBoundaries.y,
-          this._zlBoundaries.w,
-          this._zlBoundaries.h,
-          0xffffff
-        );
-        this.$.pixijs.setParameters(this._zlCenter, {
-          'alpha': 0.5,
-          'interactive': true,
-          'buttonMode': true
-        });
-        // Set a "pointer" on this
-        var that = this;
-        // Set event on mousedown
-        // Basically inti the dragging datas.
-        this._zlCenter.on('mousedown', function(event) {
-          this.data = event.data;
-          this.dragging = true;
-          // The drag origin position
-          this._deltaPos = this.data.getLocalPosition(this.parent).x - this.position.x;
-
-          var new_date = Date.now();
-          this.doubleClick = (new_date - that._lastClickTime < 300);
-          that.set('_lastClickTime', Date.now());
-
-        });
-        // Set event on mousemove
-        // Makes the slider move.
-        this._zlCenter.on('mousemove', function() {
-          if (this.dragging) {
-            // Clearer variables.
-            var pixijsWidth = that._getWidth();
-            var dragOriginPosition = this._deltaPos;
-            var currentPosition = this.data.getLocalPosition(this.parent).x;
-            // Calculate the new positions
-            this.position.x = that._getCursorCorrectPosition(0, pixijsWidth - this.width, currentPosition - dragOriginPosition);
-            that._setCursorsPosition(this.position.x, this.position.x + this.width);
-            // Fire global moved event
-            that._setZLPointers(this.position.x, this.position.x + this.width);
-            that.fire('zlGlobalMoved');
-          }
-        });
-        // Function for both mouseup and mouseupoutside
-        function mouseupFunc() {
-          if (this.dragging) {
-            if(this.doubleClick){
-              this.position.x = 0;
-              this.width = that._getWidth();
-            }
-            else{
-              // Clearer variables.
-              var pixijsWidth = that._getWidth();
-              var dragOriginPosition = this._deltaPos;
-              var currentPosition = this.data.getLocalPosition(this.parent).x;
-              // Calculate the new positions
-              this.position.x = that._getCursorCorrectPosition(0, pixijsWidth - this.width, currentPosition - dragOriginPosition);
-            }
-            that._setCursorsPosition(this.position.x, this.position.x + this.width);
-            // Ends dragging status
-            this.dragging = false;
-            // Set the time pointers & fire event
-            that._setZLPointers(this.position.x, this.position.x + this.width);
-            that.fire('zlGlobalMoved');
-          }
-        }
-        this._zlCenter.on('mouseup', mouseupFunc);
-        this._zlCenter.on('mouseupoutside', mouseupFunc);
-        // Add the slider panel to the zoomline container.
-        this._zlContainer.addChild(this._zlCenter);
-      },
-
-      /**
-       * Initialize '_zlLeft'.
-       * Set the behaviors on mouse events.
-       *
-       * @method _initZlLeft
-       */
-      _initZlLeft: function() {
-        // Create the slider graphics and set it.
-        this._zlLeft = this.$.pixijs.createCircleFill(
-          0,
-          this._zlBoundaries.y + (this._zlCenter.height / 2),
-          this._zlBoundaries.h / 2,
-          0xffffff
-        );
-        this.$.pixijs.setParameters(this._zlLeft, {
-          'interactive': true,
-          'buttonMode': true,
-          'dragging': false,
-          'cursorStyle': 'pointer'
-        });
-        // Set a "pointer" on this
-        var that = this;
-        // Set behavior on mousedown
-        this._zlLeft.on('mousedown', function(event) {
-          this.data = event.data;
-          this.dragging = true;
-          // The drag origin position
-          this._deltaPos = this.data.getLocalPosition(this.parent).x - this.position.x;
-        });
-        // Set the behavior on mousemove
-        this._zlLeft.on('mousemove', function(e) {
-          // Let's gow
-          if (this.dragging) {
-            // Clearer variables.
-            var pixijsWidth = that._getWidth();
-            var dragOriginPosition = this._deltaPos;
-            var currentPosition = this.data.getLocalPosition(this.parent).x;
-            var endPosition = that._zlRight.position.x;
-            // Calculate the new positions
-            this.position.x = that._getCursorCorrectPosition(0, endPosition, currentPosition);
-            that._setCursorsPosition(this.position.x, endPosition);
-            // Fire being moved event
-            that._setZLPointers(this.position.x, endPosition);
-            that.fire('zlBeginMoved');
-          }
-        });
-        // Function for both mouseup and mouseupoutside
-        function mouseupFunc() {
-          if (this.dragging) {
-            // Clearer variables.
-            var pixijsWidth = that._getWidth();
-            var dragOriginPosition = this._deltaPos;
-            var currentPosition = this.data.getLocalPosition(this.parent).x;
-            var endPosition = that._zlRight.position.x;
-            // Calculate the new positions
-            this.position.x = that._getCursorCorrectPosition(0, endPosition, currentPosition);
-            that._setCursorsPosition(this.position.x, endPosition);
-            // Ends dragging status
-            this.dragging = false;
-            // Set the time pointers & fire event
-            that._setZLPointers(this.position.x, endPosition);
-            that.fire('zlBeginMoved');
-          }
-        }
-        this._zlLeft.on('mouseup', mouseupFunc);
-        this._zlLeft.on('mouseupoutside', mouseupFunc);
-        // Add the begin cursor to the zoomline container.
-        this._zlContainer.addChild(this._zlLeft);
-      },
-
-      /**
-       * Initialize '_zlRight'.
-       * Set the behaviors on mouse events.
-       *
-       * @method _initZlRight
-       */
-      _initZlRight: function() {
-        // Create the slider graphics and set it.
-        this._zlRight = this.$.pixijs.createCircleFill(
-          0,
-          this._zlBoundaries.y + (this._zlCenter.height / 2),
-          this._zlBoundaries.h / 2,
-          0xffffff
-        );
-        this._zlRight.position.x = this._zlCenter.width;
-        this.$.pixijs.setParameters(this._zlRight, {
-          'interactive': true,
-          'buttonMode': true,
-          'dragging': false,
-          'cursorStyle': 'pointer'
-        });
-        // Set a "pointer" on this
-        var that = this;
-        // Set behavior on mousedown
-        this._zlRight.on('mousedown', function(event) {
-          this.data = event.data;
-          this.dragging = true;
-          // The drag origin position
-          this._deltaPos = this.data.getLocalPosition(this.parent).x - this.position.x;
-        });
-        // Set the behavior on mousemove
-        this._zlRight.on('mousemove', function(e) {
-          // Let's gow
-          if (this.dragging) {
-            // Clearer variables.
-            var pixijsWidth = that._getWidth();
-            var dragOriginPosition = this._deltaPos;
-            var currentPosition = this.data.getLocalPosition(this.parent).x;
-            var beginPosition = that._zlLeft.position.x;
-            // Calculate the new positions
-            this.position.x = that._getCursorCorrectPosition(beginPosition, pixijsWidth, currentPosition);
-            that._setCursorsPosition(beginPosition, this.position.x);
-            // Fire end moved event
-            that._setZLPointers(beginPosition, this.position.x);
-            that.fire('zlEndMoved');
-          }
-        });
-        // Function for both mouseup and mouseupoutside
-        function mouseupFunc() {
-          if (this.dragging) {
-            // Clearer variables.
-            var pixijsWidth = that._getWidth();
-            var dragOriginPosition = this._deltaPos;
-            var currentPosition = this.data.getLocalPosition(this.parent).x;
-            var beginPosition = that._zlLeft.position.x;
-            // Calculate the new positions
-            this.position.x = that._getCursorCorrectPosition(beginPosition, pixijsWidth, currentPosition);
-            that._setCursorsPosition(beginPosition, this.position.x);
-            // Ends dragging status
-            this.dragging = false;
-            // Set the time pointers & fire event
-            that._setZLPointers(beginPosition, this.position.x);
-            that.fire('zlEndMoved');
-          }
-        }
-        this._zlRight.on('mouseup', mouseupFunc);
-        this._zlRight.on('mouseupoutside', mouseupFunc);
-        this._zlContainer.addChild(this._zlRight);
-
-      },
-
-      /** TIME LINE FUNCTIONS **/
-
+      // MARK: f: _initTimeLine
       /**
        * Initialize the TimeLine.
        *
        * @method _initTimeLine
        */
       _initTimeLine: function() {
-        this.set('_tlBegin', this.begin);
-        this.set('_tlEnd', this.end);
+        this.set('_timelineBegin', this.begin);
+        this.set('_timelineEnd', this.end);
 
-        this._tlContainer = new PIXI.Container();
-        this._tlContainer.height = this._tlBoundaries.h;
-        this._tlContainer.width = this._getWidth();
-        this.$.pixijs.addToStage(this._tlContainer);
+        this._timelineContainer = new PIXI.Container();
+        this._timelineContainer.height = this._timelineContainerHeight;
+        this._timelineContainer.width = this._getWidth();
+        this.$.pixijs.addToStage(this._timelineContainer);
 
-        this.tlFormat();
+        this._initTimelineContainers();
+        this._initTimelineScroller();
+        this._fillTimelineContainers();
       },
 
-      /**
-       * Format the TimeLine according to `format`.
-       *
-       * @method tlFormat
-       */
-      tlFormat: function() {
+      // MARK: f: _initTimelineScroller
+      _initTimelineScroller: function() {
+        this._timelineContainer.interactive = true;
+        this._timelineContainer.hitArea = new PIXI.Rectangle(0, 0, this._timelineContainer._width, this._timelineContainer._height);
 
-        switch (this.format) {
-          case "ORDER":
-            this._tlFormatOrder();
-            break;
-          case "DATE":
-            this._tlFormatDate();
-            break;
-          default:
-            console.log("Error : Timeline Format unknown ( " + this.format + " ).");
-            break;
-        }
-
-      },
-
-      /**
-       * Format the TimeLine as human readable dates.
-       *
-       * @method _tlFormatDate
-       */
-      _tlFormatDate: function() {
-
-        this._tlContainer.removeChildren();
-
-        // TODO : virer ça jusqu'à ------
-
-        var x = this._tlBegin;
-        var y = this._tlEnd;
-        var z = y - x;
-
-        // ------------------------
-
-        var originalDate = new Date(this._tlBegin);
-
-        var _ms = 1000;
-        var _interval_count = 10
-
-        var _time_interval = ((this._tlEnd - this._tlBegin) / _ms) / _interval_count;
-
-        // TIME INTERVALS
-        var _seconds_in_seconds = 1;
-        var _seconds_in_minute = 60;
-        var _seconds_in_hour = 60 * 60;
-        var _seconds_in_day = 60 * 60 * 24;
-        var _seconds_in_week = 60 * 60 * 24 * 7;
-        var _seconds_in_month = 60 * 60 * 24 * (365.25 / 12);
-        var _seconds_in_year = 60 * 60 * 24 * 365.25;
-        var _seconds_in_ = [_seconds_in_year, _seconds_in_month, _seconds_in_week, _seconds_in_day, _seconds_in_hour, _seconds_in_minute, _seconds_in_seconds];
-
-        var i = 0;
-        while (i < _seconds_in_.length && _time_interval / _seconds_in_[i] < 1)
-          i++;
-
-        var _right_interval = _seconds_in_[i] * _ms;
-
-        var _use_interval = _right_interval * (_time_interval / _seconds_in_[i]);
-        _use_interval = _use_interval - (_use_interval % (_seconds_in_[i] * _ms));
-
-        var _rest = this._tlBegin % _right_interval;
-        var _first_date = new Date(this._tlBegin - _rest);
-
-        var dates = [{
-          ds: _first_date.toLocaleDateString() + "\n" + _first_date.toLocaleTimeString(),
-          dt: _first_date.getTime()
-        }];
-
-        var _begin_tmp = new Date(this._tlBegin);
-        var _end_tmp = new Date(this._tlEnd);
-
-        var _pointer = dates[0].dt;
-        var j = 1;
-        while (_pointer < this._tlEnd) {
-          var _tmp_date = new Date(dates[0].dt + j * _use_interval);
-          dates.push({
-            ds: _tmp_date.toLocaleDateString() + "\n" + _tmp_date.toLocaleTimeString(),
-            dt: dates[0].dt + j * _use_interval
-          });
-          _pointer = dates[0].dt + j * _use_interval;
-          j++;
-        }
-
-        var i = 0;
-        for (i = 0; i < dates.length; i++) {
-          var val = dates[i].dt;
-          var line = undefined;
-
-          //var pixelPos = ( val / z ) * this._width-20;
-
-          var pixelPos = (val - this._tlBegin) * (this._getWidth() - 0) / (this._tlEnd - this._tlBegin) + 0;
-
-          pixelPos = pixelPos + 10;
-
-          line = this.$.pixijs.createRectangleFill(pixelPos, this._tlBoundaries.y, 1, 7, 0xffffff);
-          var text = new PIXI.Text(dates[i].ds, {
-            font: '10px Arial',
-            fill: 0xffffff,
-            align: 'center'
-          });
-          text.x = pixelPos - text.width / 2;
-          text.y = this._tlBoundaries.y + 10;
-          text.alpha = 0.87;
-          this._tlContainer.addChild(text);
-
-          line.alpha = 0.87;
-          this._tlContainer.addChild(line);
-
-          this.grad[i].position.x = pixelPos;
-        }
-
-        while (i < this.grad.length) {
-          this.grad[i].position.x = -1;
-          i++;
-        }
-
-      },
-
-      /**
-       * Format the TimeLine as human readable dates.
-       *
-       * @method _tlFormatOrder
-       */
-      _tlFormatOrder: function() {
-        this._tlContainer.removeChild(this._tlRectangle);
-        this._tlRectangle = getRectangle(0,
-          this._tlYPosition,
-          this._stage._width,
-          this._tlHeight,
-          0x2E3842);
-        this._tlContainer.addChild(this._tlRectangle);
-
-        var x = this._tlBegin;
-        var y = this._tlEnd;
-        var z = y - x;
-
-        var z = y - x;
-
-        var z_2 = z / 10;
-
-        var interval = Math.pow(10, Math.floor(Math.log10(z_2)));
-
-        var cut = y / interval;
-        var start = x - (x % interval);
-
-        for (var i = 0; i < cut; i++) {
-
-          var val = start + interval * i;
-          var line = undefined;
-
-          var pixelPos = (val - this._tlBegin) * (1000 - 0) / (this._tlEnd - this._tlBegin) + 0;
-
-          pixelPos = pixelPos + 10;
-
-          if ((val / interval) % 10 === 0) {
-            line = this._getRectangle(pixelPos, this._tlYPosition, 1, 15, 0xffffff);
-            var text = new PIXI.Text(val, {
-              font: '12px Arial',
-              fill: 0xffffff,
-              align: 'center'
-            });
-            text.x = pixelPos - text.width / 2;
-            text.y = this._tlYPosition + 15;
-            text.alpha = 0.87;
-            this._tlRectangle.addChild(text);
-
-          } else if ((val / interval) % 5 === 0) {
-            line = this._getRectangle(pixelPos, this._tlYPosition, 1, 10, 0xffffff);
-          } else {
-            line = this._getRectangle(pixelPos, this._tlYPosition, 1, 5, 0xffffff);
+        this._timelineContainer.on('mousemove', function(component, evt) {
+          if (this._isDragged) {
+            var newPosition = this._evtData.getLocalPosition(this.parent);
+            var diff = this._startPosition.x - newPosition.x;
+            var direction = 'left';
+            if (diff < 0) {
+              diff = Math.abs(diff);
+              direction = 'right';
+            }
+            if (diff > (component._timelineContainerWidth)) {
+              this._startPosition = this._evtData.getLocalPosition(this.parent);
+              component._updateTimelineContainers(direction);
+            }
           }
-          line.alpha = 0.87;
-          this._tlRectangle.addChild(line);
+        }.bind(this._timelineContainer, this));
 
+        this._timelineContainer.on('mousedown', function(component, evt) {
+          this._isDragged = true;
+          this._evtData = evt.data;
+          this._startPosition = this._evtData.getLocalPosition(this.parent);
+        }.bind(this._timelineContainer, this));
+        this._timelineContainer.on('mouseup', function(component, evt) {
+          this._isDragged = false;
+          this._evtData = null;
+        }.bind(this._timelineContainer, this));
+        this._timelineContainer.on('mouseupoutside', function(component, evt) {
+          this._isDragged = false;
+          this._evtData = null;
+        }.bind(this._timelineContainer, this));
+
+      },
+
+      // MARK: f: _updateTimelineContainers
+      _updateTimelineContainers: function(direction) {
+        var duration = this._timelineContainers[0].e - this._timelineContainers[0].b;
+        console.log(duration);
+        if (direction === 'left') {
+          var b = this._timelineContainers[this._timelineContainers.length - 1].e + 1;
+          var e = b + duration;
+          var container = this._createContainer(this._timelineContainers.length - 1);
+          this.splice('_timelineContainers', 0, 1);
+          for (var i = 0; i < this._timelineContainers.length; i++) {
+            this._timelineContainers[i].c._intervalIndex = i;
+            this._timelineContainers[i].c.x -= (this._timelineContainerWidth);
+          }
+          for (var i = 0; i < this._timelineTextContainer.children.length; i++) {
+            this._timelineTextContainer.getChildAt(i).x -= (this._timelineContainerWidth);
+          }
+          this.push('_timelineContainers', {
+            "c": container,
+            "b": b,
+            "e": e
+          });
+        } else {
+          var e = this._timelineContainers[0].b - 1;
+          var b = e - duration;
+          var container = this._createContainer(0);
+          this.splice('_timelineContainers', (this._timelineContainers.length - 1), 1);
+          for (var i = 0; i < this._timelineContainers.length; i++) {
+            this._timelineContainers[i].c._intervalIndex = i;
+            this._timelineContainers[i].c.x += (this._timelineContainerWidth);
+          }
+          for (var i = 0; i < this._timelineTextContainer.children.length; i++) {
+            this._timelineTextContainer.getChildAt(i).x += (this._timelineContainerWidth);
+          }
+          this.push('_timelineContainers', {
+            "c": container,
+            "b": b,
+            "e": e
+          });
         }
+      },
+
+      // MARK: f: _initTimelineContainers
+      _initTimelineContainers: function() {
+        var contCount = this._width / this._timelineContainerWidth;
+        var duration = this._timelineEnd - this._timelineBegin;
+        var period = Math.ceil(duration / contCount);
+        this.set('_timelineContainers', []);
+
+        for (var i = 0; i < contCount; i++) {
+          var b = this._timelineBegin.valueOf() + (period * i);
+
+          var e = b + period;
+          var container = this._createContainer(i);
+          this.push('_timelineContainers', {
+            "c": container,
+            "b": b,
+            "e": e
+          });
+          this._timelineContainer.addChild(container);
+        }
+      },
+
+      // MARK: f: _fillTimelineContainers
+      _fillTimelineContainers: function() {
+        var period = this._ttu.get_fittest_period(this._timelineBegin, this._timelineEnd, 20);
+        console.log(period);
+
+        this.set('_timelineTextContainer', new PIXI.Container());
+        this._timelineTextContainer.x = 0;
+        this._timelineTextContainer.y = 0;
+        this._timelineTextContainer.width = this._timelineContainer._width;
+        this._timelineTextContainer.height = this._timelineContainer._height;
+
+        this.$.pixijs.addToStage(this._timelineTextContainer);
+
+        var list = [];
+        for (var i = 0; i < this._timelineContainers.length; i++) {
+          var o = new PIXI.Graphics();
+          o.beginFill(0xFFFFFF);
+          o.drawRect(0, 0, 2, 10);
+          o.endFill();
+          o.x = (this._timelineContainerWidth / 2) - 1;
+          o.y = 0;
+          this._timelineContainers[i].c.addChild(o);
+          list.push(this._timelineContainers[i].b);
+        }
+        list = this._ttu.get_noticeable_dates_from_list(list, period, 20);
+        for (var i = 0; i < list.length; i++) {
+          var o = this._timelineContainers[list[i]].c.getChildAt(0);
+          o.clear();
+          o.beginFill(0xFFFFFF);
+          o.drawRect(0, 0, 2, 20);
+          o.endFill();
+          console.log(period);
+          var t = new PIXI.Text(this._ttu.get_human_readable_interval(new Date(this._timelineContainers[list[i]].b), new Date(this._timelineContainers[list[i]].e), period), {
+            fontSize: 12,
+            fontFamily: 'Arial',
+            fill: 'white'
+          });
+          t.x = this._timelineContainers[list[i]].c.x - (t.width / 2);
+          t.y = 24;
+          this._timelineTextContainer.addChild(t);
+        }
+
+      },
+
+      // MARK: f: _createContainer
+      _createContainer: function(index) {
+        var container = new PIXI.Container();
+        container.x = (this._timelineContainerWidth) * index;
+        container.y = 0;
+        container.width = (this._timelineContainerWidth);
+        container.height = 215;
+        container._intervalIndex = index;
+        return container;
       }
 
     });
