@@ -1,8 +1,14 @@
-<link rel="import" href="../../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
 <link rel="import" href="../pixi-js-component/pixi-js-component.html">
 <link rel="import" href="../taaabs-time-utilities/taaabs-time-utilities.html">
 
+<!--
+`<taaabs-trace-timeline-scroller>` is a graphical elements that displays a timeline ruler.
 
+In typical use, just insert a `<taaabs-trace-timeline-scroller>` after a `<taaabs-trace-timeline>`.
+Do not forget to bind their begin and end time.
+
+-->
 <dom-module id="taaabs-trace-timeline-scroller">
   <template>
     <style>
@@ -10,10 +16,10 @@
         display: block;
       }
       :host #pixijs {
-        width: 100%;
+        width: 1000px;
       }
     </style>
-    <pixi-js-component id="pixijs" flex-width></pixi-js-component>
+    <pixi-js-component id="pixijs"></pixi-js-component>
   </template>
   <script>
     Polymer({
@@ -27,7 +33,6 @@
 
       properties: {
 
-        // MARK: p: begin
         /**
          * Begin time of the trace.
          *
@@ -40,7 +45,6 @@
           value: null
         },
 
-        // MARK: p: end
         /**
          * End time of the trace.
          *
@@ -53,7 +57,6 @@
           value: null
         },
 
-        // MARK: p: format
         /**
          * Format of the time.
          * Can be "millisecond" or "sequence".
@@ -67,7 +70,6 @@
           value: "millisecond"
         },
 
-        // MARK: p: openGl
         /**
          * True, uses an OpenGL renderer.
          * False, uses a simple canvas.
@@ -81,7 +83,6 @@
           value: false
         },
 
-        // MARK: p: _backgroundColor
         /**
          * Background color or the pixijs component.
          *
@@ -93,7 +94,6 @@
           value: 0x263238
         },
 
-        // MARK: p: _endTileSelectedIndex
         /**
          * Index of the last tile selected in `_intervals`.
          *
@@ -105,7 +105,6 @@
           value: -1
         },
 
-        // MARK: p: _height
         /**
          * Height of the pixijs component.
          *
@@ -117,7 +116,6 @@
           value: 65
         },
 
-        // MARK: p: _intervalTileHeight
         /**
          * Height of a tile of `_intervals`.
          *
@@ -129,7 +127,6 @@
           value: 24
         },
 
-        // MARK: p: _intervals
         /**
          * List of the timeline tiles.
          *
@@ -141,7 +138,6 @@
           value: []
         },
 
-        // MARK: p: _isBeingSelected
         /**
          * True if a user is selecting (sliding over) the tiles of `intervals`.
          * False otherwise.
@@ -154,7 +150,6 @@
           value: false
         },
 
-        // MARK: p: _lastHoverTileIndex
         /**
          * Index of the last `_intervals` tile to be hovered.
          *
@@ -166,7 +161,6 @@
           value: -1
         },
 
-        // MARK: p: _lastHoverTime
         /**
          * Last time the user hovered an '\intervals` tile . Date.now()
          *
@@ -178,7 +172,6 @@
           value: 0
         },
 
-        // MARK: p: _lastLeaveTileIndex
         /**
          * Index of the last `_intervals` tile to be left.
          *
@@ -190,7 +183,6 @@
           value: -1
         },
 
-        // MARK: p: _lastLeaveTime
         /**
          * Last time the user left an '\intervals` tile . Date.now()
          *
@@ -202,7 +194,6 @@
           value: 0
         },
 
-        // MARK: p: _startTileSelectedIndex
         /**
          * First tile to be selected by the user when he's sliding over '_intervals'.
          *
@@ -214,7 +205,6 @@
           value: -1
         },
 
-        // MARK: p: _timelineBegin
         /**
          * Begin time of the timeline.
          *
@@ -226,55 +216,50 @@
           value: 0
         },
 
-        // MARK: p: _timelineContainer
         /**
-        * PIXI.Container of the timeline.
-        *
-        * @attribute _timelineContainer
-        * @type Object
-        */
+         * PIXI.Container of the timeline.
+         *
+         * @attribute _timelineContainer
+         * @type Object
+         */
         _timelineContainer: {
          type: Object,
          value: null
         },
 
-        // MARK: p: _timelineContainerHeight
         /**
-        * Height of `_timelineContainer`.
-        *
-        * @attribute _timelineContainerHeight
-        * @type Number
-        */
+         * Height of `_timelineContainer`.
+         *
+         * @attribute _timelineContainerHeight
+         * @type Number
+         */
         _timelineContainerHeight: {
          type: Number,
          value: 35
         },
 
-        // MARK: p: _timelineContainerWidth
         /**
-        * Width of `_timelineContainer`.
-        *
-        * @attribute _timelineContainerWidth
-        * @type Number
-        */
+         * Width of `_timelineContainer`.
+         *
+         * @attribute _timelineContainerWidth
+         * @type Number
+         */
         _timelineContainerWidth: {
          type: Number,
          value: 16
         },
 
-        // MARK: p: _timelineContainers
         /**
-        * List of the timeline containers, i.e the ruler lines of the timeline.
-        *
-        * @attribute _timelineContainers
-        * @type Array
-        */
+         * List of the timeline containers, i.e the ruler lines of the timeline.
+         *
+         * @attribute _timelineContainers
+         * @type Array
+         */
         _timelineContainers: {
          type: Array,
          value: []
         },
 
-        // MARK: p: _timelineEnd
         /**
          * End time of the timeline.
          *
@@ -286,25 +271,23 @@
           value: 0
         },
 
-        // MARK: p: _timelineTextContainer
         /**
-        * PIXI.Container of the timeline texts.
-        *
-        * @attribute _timelineTextContainer
-        * @type Object
-        */
+         * PIXI.Container of the timeline texts.
+         *
+         * @attribute _timelineTextContainer
+         * @type Object
+         */
         _timelineTextContainer: {
          type: Object,
          value: null
         },
 
-        // MARK: p: _ttu
         /**
-        * TaaabsTimeUtilities.
-        *
-        * @attribute _ttu
-        * @type Object
-        */
+         * TaaabsTimeUtilities.
+         *
+         * @attribute _ttu
+         * @type Object
+         */
         _ttu: {
           type: Object,
           value: function() {
@@ -312,7 +295,6 @@
           }
         },
 
-        // MARK: p: _width
         /**
          * Width of the pixijs component.
          *
@@ -332,30 +314,139 @@
 
       attached: function() {},
 
-      // MARK: f: initVisu
       /**
-       * Initialize the visualization.
+       * Initialize the visualization. Calls `_initZoomLine` and `initTimeLine`.
        *
        * @method initVisu
        */
       initVisu: function() {
+        // Set the pixijs component.
+        this.set('_width', 1400);
+        this.$.pixijs.set('width', 1400);
         this.$.pixijs.set('height', this._height);
         this.$.pixijs.init({
           backgroundColor: this._backgroundColor,
           antialias: true
         });
         // Listen to pixi resize.
-        this.listen(this.$.pixijs, 'iron-resize', '_onPixiJsResize');
-        this.set('_width', this.$.pixijs.clientWidth);
+        //this.listen(this.$.pixijs, 'iron-resize', '_onPixiJsResize');
+        //this.set('_width', this.$.pixijs.clientWidth);
+        // Init the two main parts.
         this._initZoomLine();
         this._initTimeLine();
       },
 
-      /** ----------------------------------------------------------------------
-      // MARK: Functions : Zoomline
-      **/
+      /**
+       * Updates the ZoomLine focused interval according to a 'begin' & 'end' time.
+       * Calls `_initTimelineContainers` & `_fillTimelineContainers`.
+       *
+       * @param {!required} begin (Number) The begin time of the selected interval.
+       * @param {!required} end (Number) The end time of the selected interval.
+       *
+       * @method updateVisu
+       */
+      updateVisu: function(begin, end) {
+        this.set('_timelineBegin', begin);
+        this.set('_timelineEnd', end);
+        this._initTimelineContainers();
+        this._fillTimelineContainers();
+      },
 
-      // MARK: f: _createZoomLineTile
+
+      // TODO: Check if the drawRect is correct.
+      /**
+       * Colorize a zoomLine tile. Also emphasize (or not) its inner text.
+       *
+       * @param {!required} tile (Pixi.Container) A zoomLine tile.
+       * @param {!required} color (Number) The background color of the zoomLine tile.
+       * @param {!optionnal} textcolor (Number) The text color of the zoomLine tile.
+       * @param {!optionnal} textalpha (Number) The text alpha of the zoomLine tile.
+       *
+       * @method _color_tile
+       */
+      _color_tile: function(tile, color, textcolor, textalpha) {
+        // Get the rect
+        var g = tile.getChildAt(0);
+        g.beginFill(color);
+        g.lineStyle(1, 0xFFFFFF, 0.87);
+        g.drawRect(0, 0, g.width - 1, g.height - 1);
+        g.endFill();
+        // Get the text
+        var t = tile.getChildAt(1);
+        t.alpha = textalpha || 1;
+      },
+
+      /**
+       * Obvious.
+       *
+       * @param {!required} tile (Pixi.Container) A zoomLine tile.
+       *
+       * @method _color_tile_default
+       */
+      _color_tile_default: function(tile) {
+        this._color_tile(tile, 0x263238, null, 0.87);
+      },
+
+      /**
+       * Obvious.
+       *
+       * @param {!required} tile (Pixi.Container) A zoomLine tile.
+       *
+       * @method _color_tile_hovered
+       */
+      _color_tile_hovered: function(tile) {
+        this._color_tile(tile, 0x37474F, null, 1);
+      },
+
+      /**
+       * Obvious.
+       *
+       * @param {!required} tile (Pixi.Container) A zoomLine tile.
+       *
+       * @method _color_tile_selected
+       */
+      _color_tile_selected: function(tile) {
+        this._color_tile(tile, 0x039BE5, null, 1);
+      },
+
+      /**
+       * Obvious.
+       *
+       * @param {!required} tile (Pixi.Container) A zoomLine tile.
+       *
+       * @method _color_tile_selecting
+       */
+      _color_tile_selecting: function(tile) {
+        this._color_tile(tile, 0x01579B, null, 1);
+      },
+
+      /**
+       * Create a container for the Timeline (top of this component). The created container
+       * represents one tick of the timeline ruler.
+       * Returns a PIXI.Container.
+       *
+       * @param {!required} index (Number) The position of the Container.
+       *
+       * @method _createContainer
+       */
+      _createContainer: function(index) {
+        var container = new PIXI.Container();
+        container.x = this._timelineContainerWidth * index;
+        container.y = 0;
+        container.width = this._timelineContainerWidth;
+        container.height = 215;
+        container._intervalIndex = index;
+        return container;
+      },
+
+      /**
+       * Create a container for the zoomLine (bottom of this component).
+       * Returns a PIXI.Container.
+       *
+       * @param {!required} index (Number) The position of the Container.
+       *
+       * @method _createZoomLineTile
+       */
       _createZoomLineTile: function(index) {
         // Util vars.
         // w <- width of the tile; y <- position of the tile; h <- height of the tile
@@ -547,47 +638,173 @@
         return tile;
       },
 
-      // MARK: f: _color_tile_hovered
-      _color_tile_hovered: function(tile) {
-        this._color_tile(tile, 0x37474F, null, 1);
+      /**
+       * Fill a timeline container. Basically draw a line to represent a tick on the ruler.
+       * Add a text for remarkable tick (first of the month, week, etc...)
+       *
+       * @method _fillTimelineContainers
+       */
+      _fillTimelineContainers: function() {
+        // Get the most representative timeline interval.
+        var period = this._ttu.get_fittest_period(this._timelineBegin, this._timelineEnd, 20);
+        // Set the timelineTextContainer if it hasn't been done yet.
+        if(this._timelineTextContainer === null){
+          this.set('_timelineTextContainer', new PIXI.Container());
+          this._timelineTextContainer.x = 0;
+          this._timelineTextContainer.y = 0;
+          this._timelineTextContainer.width = this._timelineContainer._width;
+          this._timelineTextContainer.height = this._timelineContainer._height;
+          this.$.pixijs.addToStage(this._timelineTextContainer);
+        }
+        // Draw a short line for every tick of the ruler.
+        // Push the begin time of each interval into list, in order to retrieve the remarkable dates.
+        var list = [];
+        for (var i = 0; i < this._timelineContainers.length; i++) {
+          var o = new PIXI.Graphics();
+          if(this._timelineContainers[i].c.children.length > 0){
+            o = this._timelineContainers[i].c.getChildAt(0);
+            o.clear();
+          }
+          o.beginFill(0xFFFFFF);
+          o.drawRect(0, 0, 2, 10);
+          o.endFill();
+          o.x = (this._timelineContainerWidth / 2) - 1;
+          o.y = 0;
+          this._timelineContainers[i].c.addChild(o);
+          list.push(this._timelineContainers[i].b);
+        }
+        // Retrieve the remarkable dates.
+        list = this._ttu.get_noticeable_dates_from_list(list, period, 20);
+        // Empty the text container.
+        this._timelineTextContainer.removeChildren();
+        // Reset the remarkable ticks (longer line + text)
+        for (var i = 0; i < list.length; i++) {
+          var o = this._timelineContainers[list[i]].c.getChildAt(0);
+          o.clear();
+          o.beginFill(0xFFFFFF);
+          o.drawRect(0, 0, 2, 20);
+          o.endFill();
+          var t = new PIXI.Text(this._ttu.get_human_readable_interval(new Date(this._timelineContainers[list[i]].b), new Date(this._timelineContainers[list[i]].e), period), {
+            fontSize: 12,
+            fontFamily: 'Arial',
+            fill: 'white'
+          });
+          t.x = this._timelineContainers[list[i]].c.x - (t.width / 2);
+          t.y = 24;
+          this._timelineTextContainer.addChild(t);
+        }
       },
 
-      // MARK: f: _color_tile_selected
-      _color_tile_selected: function(tile) {
-        this._color_tile(tile, 0x039BE5, null, 1);
+      /**
+       * Return the width of the pixijs component (in pixels).
+       *
+       * @method _getWidth
+       */
+      _getWidth: function() {
+        return this._width;
       },
 
-      // MARK: f: _color_tile_selecting
-      _color_tile_selecting: function(tile) {
-        this._color_tile(tile, 0x01579B, null, 1);
+      /**
+       * Initialize the TimeLine.
+       * Calls `_initTimelineContainers`, `_initTimelineScroller` & `_fillTimelineContainers`.
+       *
+       * @method _initTimeLine
+       */
+      _initTimeLine: function() {
+        // Set the timeline begin and end time
+        this.set('_timelineBegin', this.begin);
+        this.set('_timelineEnd', this.end);
+        // Create the timeline container
+        this._timelineContainer = new PIXI.Container();
+        this._timelineContainer.height = this._timelineContainerHeight;
+        this._timelineContainer.width = this._getWidth();
+        this.$.pixijs.addToStage(this._timelineContainer);
+        // Fill the container
+        this._initTimelineContainers();
+        this._initTimelineScroller();
+        this._fillTimelineContainers();
       },
 
-      // MARK: f: _color_tile_default
-      _color_tile_default: function(tile) {
-        this._color_tile(tile, 0x263238, null, 0.87);
+      /**
+       * Initialize the TimeLine container (i.e the ruler ticks containers).
+       *
+       * @method _initTimelineContainers
+       */
+      _initTimelineContainers: function() {
+        // Calculate the positions & length of the ruler ticks.
+        var contCount = this._width / this._timelineContainerWidth;
+        var duration = this._timelineEnd - this._timelineBegin;
+        var period = Math.ceil(duration / contCount);
+        // Empty the previous ticks.
+        this._timelineContainer.removeChildren();
+        this.set('_timelineContainers', []);
+        // Create a container per tick.
+        for (var i = 0; i < contCount; i++) {
+          var b = this._timelineBegin.valueOf() + (period * i);
+          var e = b + period - 1;
+          var container = this._createContainer(i);
+          this.push('_timelineContainers', {
+            "c": container,
+            "b": b,
+            "e": e
+          });
+          this._timelineContainer.addChild(this._timelineContainers[i].c);
+        }
       },
 
-      // MARK: f: _color_tile
-      _color_tile: function(tile, color, textcolor, textalpha) {
-        // Get the rect
-        var g = tile.getChildAt(0);
-        g.beginFill(color);
-        g.lineStyle(1, 0xFFFFFF, 0.87);
-        g.drawRect(0, 0, g.width - 1, g.height - 1);
-        g.endFill();
-        // Get the text
-        var t = tile.getChildAt(1);
-        t.alpha = textalpha;
+      /**
+       * Initialize the TimeLine scroller (i.e the container that makes the ruler moves right <-> left).
+       *
+       * @method _initTimelineScroller
+       */
+      _initTimelineScroller: function() {
+        // Set the timeline container interactive
+        this._timelineContainer.interactive = true;
+        this._timelineContainer.hitArea = new PIXI.Rectangle(0, 0, this._timelineContainer._width, this._timelineContainer._height);
+        // Behavior on mousemove.
+        // Get the delta position. If its abs > a tick width, we move the ruler to one width left or right.
+        // Update all the containers then.
+        this._timelineContainer.on('mousemove', function(component, evt) {
+          if (this._isDragged) {
+            var newPosition = this._evtData.getLocalPosition(this.parent);
+            var diff = this._startPosition.x - newPosition.x;
+            var direction = 'left';
+            if (diff < 0) {
+              diff = Math.abs(diff);
+              direction = 'right';
+            }
+            if (diff > (component._timelineContainerWidth)) {
+              this._startPosition = this._evtData.getLocalPosition(this.parent);
+              component._updateTimelineContainers(direction);
+            }
+          }
+        }.bind(this._timelineContainer, this));
+        // Rest of behavior basically register the fact that the user is clicking or moving.
+        this._timelineContainer.on('mousedown', function(component, evt) {
+          this._isDragged = true;
+          this._evtData = evt.data;
+          this._startPosition = this._evtData.getLocalPosition(this.parent);
+        }.bind(this._timelineContainer, this));
+        this._timelineContainer.on('mouseup', function(component, evt) {
+          this._isDragged = false;
+          this._evtData = null;
+        }.bind(this._timelineContainer, this));
+        this._timelineContainer.on('mouseupoutside', function(component, evt) {
+          this._isDragged = false;
+          this._evtData = null;
+        }.bind(this._timelineContainer, this));
       },
 
-      // MARK: f: _initZoomLine
+      /**
+       * Initialize the zoomLine. Get the fittes time interval, then create the zoomline tiles.
+       *
+       * @method _initZoomLine
+       */
       _initZoomLine: function() {
         // Retrieve the fitest period.
         var period = this._ttu.get_fittest_period(this.begin, this.end, 20);
-        console.log(period);
         // Retrieve the intervals.
         var intervals = this._retrieveAllMainIntervals(period);
-        console.log(intervals);
         var w = this._width / intervals.length;
         this.set('_intervals', intervals);
         for (var i = 0; i < intervals.length; i++) {
@@ -596,6 +813,44 @@
         }
       },
 
+      /**
+       * On the selection of a zoomline interval (one tile or severals).
+       * Fires `timeline-scroller-new-bounds`.
+       *
+       * @param {!required} list (Array) List of selected tiles.
+       *
+       * @method _intervalTileSelected
+       */
+      _intervalTileSelected: function(list) {
+        var b = list[0].b;
+        var e = list[list.length - 1].e;
+        this.updateVisu(b, e);
+        this.fire("timeline-scroller-new-bounds", {
+          "b": b.valueOf(),
+          "e": e.valueOf()
+        });
+      },
+
+      /**
+       * Change `_width` according to the pixi width.
+       *
+       * @method _onPixiJsResize
+       */
+      _onPixiJsResize: function() {
+        this.async(function(evt) {
+          this.set('_width', this.$.pixijs.clientWidth);
+          //TODO Manage _intervals begin and end time.
+          this.updateVisu(this._zlBegin, this._zlEnd);
+        }.bind(this), 500);
+      },
+
+      /**
+       * Returns a list of intervals between `this.begin` & `this.end` according to the time interval `p`.
+       *
+       * @param {!required} p (String) The time interval.
+       *
+       * @method _retrieveAllMainIntervals
+       */
       _retrieveAllMainIntervals: function(p) {
         // We set the variables
         var b = this.begin;
@@ -624,233 +879,72 @@
         return intervals;
       },
 
-      _intervalTileSelected: function(list) {
-        var b = list[0].b;
-        var e = list[list.length - 1].e;
-        this.updateVisu(b, e);
-
-        this.fire("timeline-scroller-new-bounds", {
-          "b": b.valueOf(),
-          "e": e.valueOf()
-        });
-      },
-
-      /** ----------------------------------------------------------------------
-      // MARK: Functions: OLD functions
-      **/
-
       /**
-       * Change `_width` according to the pixi width.
+       * Updates the timeline "one step" to the left or the right. Called by the scroller.
        *
-       * @method _onPixiJsResize
+       * @param {!required} direction (String) `Right` or `Left`.
+       *
+       * @method _updateTimelineContainers
        */
-      _onPixiJsResize: function() {
-        this.async(function(evt) {
-          this.set('_width', this.$.pixijs.clientWidth);
-          this.updateVisu(this._zlBegin, this._zlEnd);
-        }.bind(this), 500);
-      },
-
-      /**
-       * Return the width of the pixijs component (in pixels).
-       *
-       * @method _getWidth
-       */
-      _getWidth: function() {
-        return this._width;
-      },
-
-      /**
-       * Updates the ZoomLine focused interval according to a 'begin' & 'end' time.
-       *
-       * @param {!required} begin (Number) The begin time of the selected interval.
-       * @param {!required} end (Number) The end time of the selected interval.
-       *
-       * @method updateVisu
-       */
-      updateVisu: function(begin, end) {
-        this.set('_timelineBegin', begin);
-        this.set('_timelineEnd', end);
-        //this.tlFormat();
-        this._initTimelineContainers();
-        this._fillTimelineContainers();
-      },
-
-
-      // MARK: f: _initTimeLine
-      /**
-       * Initialize the TimeLine.
-       *
-       * @method _initTimeLine
-       */
-      _initTimeLine: function() {
-        this.set('_timelineBegin', this.begin);
-        this.set('_timelineEnd', this.end);
-
-        this._timelineContainer = new PIXI.Container();
-        this._timelineContainer.height = this._timelineContainerHeight;
-        this._timelineContainer.width = this._getWidth();
-        this.$.pixijs.addToStage(this._timelineContainer);
-
-        this._initTimelineContainers();
-        this._initTimelineScroller();
-        this._fillTimelineContainers();
-      },
-
-      // MARK: f: _initTimelineScroller
-      _initTimelineScroller: function() {
-        this._timelineContainer.interactive = true;
-        this._timelineContainer.hitArea = new PIXI.Rectangle(0, 0, this._timelineContainer._width, this._timelineContainer._height);
-
-        this._timelineContainer.on('mousemove', function(component, evt) {
-          if (this._isDragged) {
-            var newPosition = this._evtData.getLocalPosition(this.parent);
-            var diff = this._startPosition.x - newPosition.x;
-            var direction = 'left';
-            if (diff < 0) {
-              diff = Math.abs(diff);
-              direction = 'right';
-            }
-            if (diff > (component._timelineContainerWidth)) {
-              this._startPosition = this._evtData.getLocalPosition(this.parent);
-              component._updateTimelineContainers(direction);
-            }
-          }
-        }.bind(this._timelineContainer, this));
-
-        this._timelineContainer.on('mousedown', function(component, evt) {
-          this._isDragged = true;
-          this._evtData = evt.data;
-          this._startPosition = this._evtData.getLocalPosition(this.parent);
-        }.bind(this._timelineContainer, this));
-        this._timelineContainer.on('mouseup', function(component, evt) {
-          this._isDragged = false;
-          this._evtData = null;
-        }.bind(this._timelineContainer, this));
-        this._timelineContainer.on('mouseupoutside', function(component, evt) {
-          this._isDragged = false;
-          this._evtData = null;
-        }.bind(this._timelineContainer, this));
-
-      },
-
-      // MARK: f: _updateTimelineContainers
       _updateTimelineContainers: function(direction) {
+        // Get the regular duration between two timeline steps.
         var duration = this._timelineContainers[0].e - this._timelineContainers[0].b;
-        console.log(duration);
-        if (direction === 'left') {
-          var b = this._timelineContainers[this._timelineContainers.length - 1].e + 1;
-          var e = b + duration;
-          var container = this._createContainer(this._timelineContainers.length - 1);
-          this.splice('_timelineContainers', 0, 1);
-          for (var i = 0; i < this._timelineContainers.length; i++) {
-            this._timelineContainers[i].c._intervalIndex = i;
-            this._timelineContainers[i].c.x -= (this._timelineContainerWidth);
-          }
-          for (var i = 0; i < this._timelineTextContainer.children.length; i++) {
-            this._timelineTextContainer.getChildAt(i).x -= (this._timelineContainerWidth);
-          }
-          this.push('_timelineContainers', {
-            "c": container,
-            "b": b,
-            "e": e
-          });
-        } else {
-          var e = this._timelineContainers[0].b - 1;
-          var b = e - duration;
-          var container = this._createContainer(0);
-          this.splice('_timelineContainers', (this._timelineContainers.length - 1), 1);
-          for (var i = 0; i < this._timelineContainers.length; i++) {
-            this._timelineContainers[i].c._intervalIndex = i;
-            this._timelineContainers[i].c.x += (this._timelineContainerWidth);
-          }
-          for (var i = 0; i < this._timelineTextContainer.children.length; i++) {
-            this._timelineTextContainer.getChildAt(i).x += (this._timelineContainerWidth);
-          }
-          this.push('_timelineContainers', {
-            "c": container,
-            "b": b,
-            "e": e
-          });
-        }
-      },
-
-      // MARK: f: _initTimelineContainers
-      _initTimelineContainers: function() {
-        var contCount = this._width / this._timelineContainerWidth;
-        var duration = this._timelineEnd - this._timelineBegin;
-        var period = Math.ceil(duration / contCount);
-        this.set('_timelineContainers', []);
-
-        for (var i = 0; i < contCount; i++) {
-          var b = this._timelineBegin.valueOf() + (period * i);
-
-          var e = b + period;
-          var container = this._createContainer(i);
-          this.push('_timelineContainers', {
-            "c": container,
-            "b": b,
-            "e": e
-          });
-          this._timelineContainer.addChild(container);
-        }
-      },
-
-      // MARK: f: _fillTimelineContainers
-      _fillTimelineContainers: function() {
-        var period = this._ttu.get_fittest_period(this._timelineBegin, this._timelineEnd, 20);
-        console.log(period);
-
-        this.set('_timelineTextContainer', new PIXI.Container());
-        this._timelineTextContainer.x = 0;
-        this._timelineTextContainer.y = 0;
-        this._timelineTextContainer.width = this._timelineContainer._width;
-        this._timelineTextContainer.height = this._timelineContainer._height;
-
-        this.$.pixijs.addToStage(this._timelineTextContainer);
-
+        // List ofremarkable dates.
         var list = [];
-        for (var i = 0; i < this._timelineContainers.length; i++) {
-          var o = new PIXI.Graphics();
-          o.beginFill(0xFFFFFF);
-          o.drawRect(0, 0, 2, 10);
-          o.endFill();
-          o.x = (this._timelineContainerWidth / 2) - 1;
-          o.y = 0;
-          this._timelineContainers[i].c.addChild(o);
-          list.push(this._timelineContainers[i].b);
-        }
-        list = this._ttu.get_noticeable_dates_from_list(list, period, 20);
-        for (var i = 0; i < list.length; i++) {
-          var o = this._timelineContainers[list[i]].c.getChildAt(0);
-          o.clear();
-          o.beginFill(0xFFFFFF);
-          o.drawRect(0, 0, 2, 20);
-          o.endFill();
-          console.log(period);
-          var t = new PIXI.Text(this._ttu.get_human_readable_interval(new Date(this._timelineContainers[list[i]].b), new Date(this._timelineContainers[list[i]].e), period), {
-            fontSize: 12,
-            fontFamily: 'Arial',
-            fill: 'white'
+        // The new tick index (last position for a movement to the left, first position to the right)
+        var nuIndex = this._timelineContainers.length - 1;
+        // The previous tick index.
+        var exIndex = 0;
+        // If the scroller goes to the left
+        if (direction === 'left') {
+          // Get the new container, the one to delete, and the one prior to the new.
+          var nuContainer = this._createContainer(nuIndex + 1);
+          var prevContainer = this._timelineContainers[nuIndex];
+          var exContainer = this._timelineContainers[exIndex];
+          // Get the dates of the enw container
+          var b = prevContainer.e + 1;
+          var e = b + duration;
+          // Remove the old container
+          this._timelineContainer.removeChild(exContainer.c);
+          this.splice('_timelineContainers', exIndex, 1);
+          // Insert the new container
+          this.splice('_timelineContainers', nuIndex, 0, {
+            "c": nuContainer,
+            "b": b,
+            "e": e
           });
-          t.x = this._timelineContainers[list[i]].c.x - (t.width / 2);
-          t.y = 24;
-          this._timelineTextContainer.addChild(t);
+          this._timelineContainer.addChild(this._timelineContainers[nuIndex].c);
+          // Reset the position of each container
+          for (var i = 0; i < this._timelineContainers.length; i++) {
+            this._timelineContainers[i].c._intervalIndex = i;
+            this._timelineContainers[i].c.x -= this._timelineContainerWidth;
+          }
+        } else {
+          // Same thing, but on the other way ....
+          var nuIndex = 0;
+          var exIndex = this._timelineContainers.length - 1;
+          var nuContainer = this._createContainer( nuIndex - 1);
+          var prevContainer = this._timelineContainers[nuIndex];
+          var exContainer = this._timelineContainers[exIndex];
+          var e = prevContainer.b - 1;
+          var b = e - duration;
+          this._timelineContainer.removeChild(exContainer.c);
+          this.splice('_timelineContainers', exIndex, 1);
+          this.splice('_timelineContainers', nuIndex, 0, {
+            "c": nuContainer,
+            "b": b,
+            "e": e
+          });
+          this._timelineContainer.addChild(this._timelineContainers[nuIndex].c);
+          for (var i = 0; i < this._timelineContainers.length; i++) {
+            this._timelineContainers[i].c._intervalIndex = i;
+            this._timelineContainers[i].c.x += this._timelineContainerWidth;
+          }
         }
-
-      },
-
-      // MARK: f: _createContainer
-      _createContainer: function(index) {
-        var container = new PIXI.Container();
-        container.x = (this._timelineContainerWidth) * index;
-        container.y = 0;
-        container.width = (this._timelineContainerWidth);
-        container.height = 215;
-        container._intervalIndex = index;
-        return container;
+        // Then, we draw the timeline again....
+        // TODO : Update the zoomline component.
+        this._fillTimelineContainers();
       }
-
     });
   </script>
 </dom-module>
