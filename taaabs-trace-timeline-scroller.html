@@ -31,6 +31,12 @@ Do not forget to bind their begin and end time.
        * @event timeline-scroller-new-bounds
        */
 
+       /**
+        * {d: DIRECTION, b: BEGIN_TIME, e:END_TIME}
+        *
+        * @event timeline-scroller-shift
+        */
+
       properties: {
 
         /**
@@ -326,7 +332,7 @@ Do not forget to bind their begin and end time.
         this.$.pixijs.set('height', this._height);
         this.$.pixijs.init({
           backgroundColor: this._backgroundColor,
-          antialias: true
+          antialias: false
         });
         // Listen to pixi resize.
         //this.listen(this.$.pixijs, 'iron-resize', '_onPixiJsResize');
@@ -899,6 +905,8 @@ Do not forget to bind their begin and end time.
         var nuIndex = this._timelineContainers.length - 1;
         // The previous tick index.
         var exIndex = 0;
+        var b = 0;
+        var e = 0;
         // If the scroller goes to the left
         if (direction === 'left') {
           // Get the new container, the one to delete, and the one prior to the new.
@@ -906,8 +914,8 @@ Do not forget to bind their begin and end time.
           var prevContainer = this._timelineContainers[nuIndex];
           var exContainer = this._timelineContainers[exIndex];
           // Get the dates of the enw container
-          var b = prevContainer.e + 1;
-          var e = b + duration;
+          b = prevContainer.e + 1;
+          e = b + duration;
           // Remove the old container
           this._timelineContainer.removeChild(exContainer.c);
           this.splice('_timelineContainers', exIndex, 1);
@@ -930,8 +938,8 @@ Do not forget to bind their begin and end time.
           var nuContainer = this._createContainer( nuIndex - 1);
           var prevContainer = this._timelineContainers[nuIndex];
           var exContainer = this._timelineContainers[exIndex];
-          var e = prevContainer.b - 1;
-          var b = e - duration;
+          e = prevContainer.b - 1;
+          b = e - duration;
           this._timelineContainer.removeChild(exContainer.c);
           this.splice('_timelineContainers', exIndex, 1);
           this.splice('_timelineContainers', nuIndex, 0, {
@@ -948,6 +956,35 @@ Do not forget to bind their begin and end time.
         // Then, we draw the timeline again....
         // TODO : Update the zoomline component.
         this._fillTimelineContainers();
+        this._updateZoomLine();
+        this.fire('timeline-scroller-shift', {
+          'd': direction,
+          'b': this._timelineContainers[0].b,
+          'e': this._timelineContainers[this._timelineContainers.length - 1].e,
+          'nb': b,
+          'ne': e
+
+        });
+      },
+
+      /**
+       * Update the zoomline.
+       *
+       * @method _updateZoomLine
+       */
+      _updateZoomLine: function() {
+        var b = this._timelineContainers[0].b;
+        var e = this._timelineContainers[this._timelineContainers.length - 1].e;
+        for(var i = 0; i < this._intervals.length; i++){
+          if((this._intervals[i].b <= b && b <= this._intervals[i].e ) || (this._intervals[i].b <= e && e <= this._intervals[i].e) || (b <= this._intervals[i].b && this._intervals[i].e <= e )){
+            this._intervals[i].c._isSelected = true;
+            this._color_tile_selected(this._intervals[i].c);
+          }
+          else{
+            this._intervals[i].c._isSelected = false;
+            this._color_tile_default(this._intervals[i].c);
+          }
+        }
       }
     });
   </script>
