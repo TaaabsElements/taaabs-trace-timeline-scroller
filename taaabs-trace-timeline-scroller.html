@@ -14,9 +14,10 @@ Do not forget to bind their begin and end time.
     <style>
       :host {
         display: block;
+        width: 100%;
       }
       :host #pixijs {
-        width: 1000px;
+        width: 100%;
       }
     </style>
     <pixi-js-component id="pixijs" fps=30></pixi-js-component>
@@ -61,6 +62,18 @@ Do not forget to bind their begin and end time.
           type: Number,
           notify: false,
           value: null
+        },
+
+        /**
+         * True is the timeline-scroller ahs been set. False otherwise.
+         *
+         * @attribute isReady
+         * @type Boolean
+         */
+        isReady: {
+          type: Boolean,
+          notify: true,
+          value: false
         },
 
         /**
@@ -201,6 +214,18 @@ Do not forget to bind their begin and end time.
         },
 
         /**
+         * Maximum number of text we display (in order to avoid supperposition).
+         * Correspond to the number of zoomline tile & significant rule ticks at max.
+         *
+         * @attribute _maxTextElementDisplayed
+         * @type Number
+         */
+        _maxTextElementDisplayed: {
+         type: Number,
+         value: 20
+        },
+
+        /**
          * First tile to be selected by the user when he's sliding over '_intervals'.
          *
          * @attribute _startTileSelectedIndex
@@ -311,35 +336,107 @@ Do not forget to bind their begin and end time.
           type: Number,
           notify: true,
           value: 0
-        }
+        },
+
+        /**
+         * The zoomline  main container
+         *
+         * @attribute _zoomlineContainer
+         * @type Object
+         */
+        _zoomlineContainer: {
+         type: Object,
+         notify: true,
+         value: null
+        },
       },
 
-      listeners: {},
+      behaviors: [
+        Polymer.IronResizableBehavior
+      ],
+
+      listeners: {
+        'iron-resize': '_onResize'
+      },
 
       ready: function() {},
 
       attached: function() {},
 
+      _onResize: function(){
+        // Hide the pixijs component to retrieve the real offset bounds.
+        this.$.pixijs.style.display = 'none';
+        // Clear the previous resizing timeout. If it's null, won't trigger any error \o/.
+        clearTimeout(this.get('_resizeTimeout'));
+        // Set the new timeout.
+        // First call `resizeVisu`. Then retrieve the stored obsels. Clean the `_obselsList` property.
+        // Finally redraw the obsels and show the timeline back.
+        this.set('_resizeTimeout', setTimeout(function(){
+          this.resize();
+          if(this.isReady) this.init(this.begin, this.end);
+          this.$.pixijs.style.display = 'block';
+        }.bind(this), 200));
+      },
+
       /**
-       * Initialize the visualization. Calls `_initZoomLine` and `initTimeLine`.
+       * Initialize the component (Destroy the previous setting if there's one).
        *
-       * @method initVisu
+       * @param {!required} begin {String} The begin time of the timeline-scroller-shift.
+       * @param {!required} end {String} The end time on the timeline-scroller-shift.
+       *
+       * @method init
        */
-      initVisu: function() {
-        // Set the pixijs component.
-        this.set('_width', 1400);
-        this.$.pixijs.set('width', 1400);
+      init: function(begin, end) {
+        // Set the begin & end times
+        this.set('begin', begin);
+        this.set('end', end);
+        // Set the main containers
+        this._initContainer('_timelineContainer', 0, 0, this._width, this._timelineContainerHeight);
+        this._initContainer('_timelineTextContainer', 0, 0, this._width, this._timelineContainerHeight);
+        this._initContainer('_zoomlineContainer', 0, (this._height - this._intervalTileHeight), this._width, this._intervalTileHeight);
+        // Fill the main containers
+        this._fillZoomline();
+        this._initTimelineContainers();
+        this._initTimelineScroller();
+        this._fillTimelineContainers();
+        // Everything's ready \o/
+        this.set('isReady', true);
+      },
+
+      /**
+       * Initialize one of the main containers.
+       *
+       * @param {!required} id {String} Id of the container.
+       * @param {!required} x  {Number} X position of the container.
+       * @param {!required} y  {Number} Y position of the container.
+       * @param {!required} w  {Number} Width of the container.
+       * @param {!required} h  {Number} Height of the container.
+       *
+       * @method _initContainer
+       */
+      _initContainer: function(id, x, y, w, h){
+        if(this.get(id) !== null) this.$.pixijs.removeChildFromStage(this.get(id));
+        var c = new PIXI.Container();
+        c.x = x;     c.y = y;
+        c.width = w; c.height = h;
+        this.set(id, c);
+        this.$.pixijs.addToStage(this.get(id));
+      },
+
+      /**
+       * Resize the component to fit the offset bounds.
+       *
+       * @method resize
+       */
+      resize: function(){
+        this.set('_width', this.offsetWidth);
+        if(this._width !== 0) this.set('_maxTextElementDisplayed', Math.floor(this._width / 100));
+        this.$.pixijs.set('width', this._width);
         this.$.pixijs.set('height', this._height);
         this.$.pixijs.init({
           backgroundColor: this._backgroundColor,
           antialias: false
         });
-        // Listen to pixi resize.
-        //this.listen(this.$.pixijs, 'iron-resize', '_onPixiJsResize');
-        //this.set('_width', this.$.pixijs.clientWidth);
-        // Init the two main parts.
-        this._initZoomLine();
-        this._initTimeLine();
       },
 
       /**
@@ -349,15 +446,14 @@ Do not forget to bind their begin and end time.
        * @param {!required} begin (Number) The begin time of the selected interval.
        * @param {!required} end (Number) The end time of the selected interval.
        *
-       * @method updateVisu
+       * @method update
        */
-      updateVisu: function(begin, end) {
+      update: function(begin, end) {
         this.set('_timelineBegin', begin);
         this.set('_timelineEnd', end);
         this._initTimelineContainers();
         this._fillTimelineContainers();
       },
-
 
       // TODO: Check if the drawRect is correct.
       /**
@@ -457,14 +553,13 @@ Do not forget to bind their begin and end time.
         // Util vars.
         // w <- width of the tile; y <- position of the tile; h <- height of the tile
         var w = this._width / this._intervals.length;
-        var y = this._height - this._intervalTileHeight;
         var h = this._intervalTileHeight;
         // Creation of the main container
         //
         // Bounds
         var tile = new PIXI.Container();
         tile.x = index * w;
-        tile.y = y;
+        tile.y = 0;
         tile.width = w;
         tile.height = h;
         tile._intervalIndex = index;
@@ -652,7 +747,7 @@ Do not forget to bind their begin and end time.
        */
       _fillTimelineContainers: function() {
         // Get the most representative timeline interval.
-        var period = this._ttu.get_fittest_period(this._timelineBegin, this._timelineEnd, 20);
+        var period = this._ttu.get_fittest_period(this._timelineBegin, this._timelineEnd, this._maxTextElementDisplayed);
         // Set the timelineTextContainer if it hasn't been done yet.
         if(this._timelineTextContainer === null){
           this.set('_timelineTextContainer', new PIXI.Container());
@@ -679,7 +774,7 @@ Do not forget to bind their begin and end time.
         }
         // Retrieve the remarkable dates.
         var list = [];
-        var iteration = Math.ceil(this._timelineContainers.length / 20);
+        var iteration = Math.ceil(this._timelineContainers.length / this._maxTextElementDisplayed);
         var i = 0;
         while((i*iteration) < this._timelineContainers.length){
           list.push(i*iteration);
@@ -703,36 +798,6 @@ Do not forget to bind their begin and end time.
           t.y = 24;
           this._timelineTextContainer.addChild(t);
         }
-      },
-
-      /**
-       * Return the width of the pixijs component (in pixels).
-       *
-       * @method _getWidth
-       */
-      _getWidth: function() {
-        return this._width;
-      },
-
-      /**
-       * Initialize the TimeLine.
-       * Calls `_initTimelineContainers`, `_initTimelineScroller` & `_fillTimelineContainers`.
-       *
-       * @method _initTimeLine
-       */
-      _initTimeLine: function() {
-        // Set the timeline begin and end time
-        this.set('_timelineBegin', this.begin);
-        this.set('_timelineEnd', this.end);
-        // Create the timeline container
-        this._timelineContainer = new PIXI.Container();
-        this._timelineContainer.height = this._timelineContainerHeight;
-        this._timelineContainer.width = this._getWidth();
-        this.$.pixijs.addToStage(this._timelineContainer);
-        // Fill the container
-        this._initTimelineContainers();
-        this._initTimelineScroller();
-        this._fillTimelineContainers();
       },
 
       /**
@@ -808,18 +873,18 @@ Do not forget to bind their begin and end time.
       /**
        * Initialize the zoomLine. Get the fittes time interval, then create the zoomline tiles.
        *
-       * @method _initZoomLine
+       * @method _fillZoomline
        */
-      _initZoomLine: function() {
+      _fillZoomline: function() {
         // Retrieve the fitest period.
-        var period = this._ttu.get_fittest_period(this.begin, this.end, 20);
+        var period = this._ttu.get_fittest_period(this.begin, this.end, this._maxTextElementDisplayed);
         // Retrieve the intervals.
         var intervals = this._retrieveAllMainIntervals(period);
         var w = this._width / intervals.length;
         this.set('_intervals', intervals);
         for (var i = 0; i < intervals.length; i++) {
           intervals[i].c = this._createZoomLineTile(i);
-          this.$.pixijs.addToStage(intervals[i].c);
+          this._zoomlineContainer.addChild(intervals[i].c);
         }
       },
 
@@ -834,24 +899,11 @@ Do not forget to bind their begin and end time.
       _intervalTileSelected: function(list) {
         var b = list[0].b;
         var e = list[list.length - 1].e;
-        this.updateVisu(b, e);
+        this.update(b, e);
         this.fire("timeline-scroller-new-bounds", {
           "b": b.valueOf(),
           "e": e.valueOf()
         });
-      },
-
-      /**
-       * Change `_width` according to the pixi width.
-       *
-       * @method _onPixiJsResize
-       */
-      _onPixiJsResize: function() {
-        this.async(function(evt) {
-          this.set('_width', this.$.pixijs.clientWidth);
-          //TODO Manage _intervals begin and end time.
-          this.updateVisu(this._zlBegin, this._zlEnd);
-        }.bind(this), 500);
       },
 
       /**
