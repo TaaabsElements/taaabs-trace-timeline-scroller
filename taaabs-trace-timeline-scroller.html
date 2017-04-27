@@ -390,6 +390,8 @@ Do not forget to bind their begin and end time.
         // Set the begin & end times
         this.set('begin', begin);
         this.set('end', end);
+        this.set('_timelineBegin', begin);
+        this.set('_timelineEnd', end);
         // Set the main containers
         this._initContainer('_timelineContainer', 0, 0, this._width, this._timelineContainerHeight);
         this._initContainer('_timelineTextContainer', 0, 0, this._width, this._timelineContainerHeight);
@@ -748,6 +750,10 @@ Do not forget to bind their begin and end time.
       _fillTimelineContainers: function() {
         // Get the most representative timeline interval.
         var period = this._ttu.get_fittest_period(this._timelineBegin, this._timelineEnd, this._maxTextElementDisplayed);
+        console.log('OOOOOOOOOOh '+this._timelineBegin);
+        console.log('OOOOOOOOOOh '+this._timelineEnd);
+        console.log('OOOOOOOOOOh '+this._maxTextElementDisplayed);
+        console.log('OOOOOOOOOOh '+period);
         // Set the timelineTextContainer if it hasn't been done yet.
         if(this._timelineTextContainer === null){
           this.set('_timelineTextContainer', new PIXI.Container());
