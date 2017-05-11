@@ -40,6 +40,9 @@ Do not forget to bind their begin and end time.
 
       properties: {
 
+        /** ================================================================ **/
+        /**                         PUBLIC PROPERTIES                        **/
+
         /**
          * Begin time of the trace.
          *
@@ -101,6 +104,9 @@ Do not forget to bind their begin and end time.
           notify: true,
           value: false
         },
+
+        /** ================================================================ **/
+        /**                        PRIVATE PROPERTIES                        **/
 
         /**
          * Background color or the pixijs component.
@@ -322,7 +328,7 @@ Do not forget to bind their begin and end time.
         _ttu: {
           type: Object,
           value: function() {
-            return new TaaabsTimeUtilities();
+            return new TAAABS.TimeUtilities();
           }
         },
 
@@ -359,9 +365,81 @@ Do not forget to bind their begin and end time.
         'iron-resize': '_onResize'
       },
 
-      ready: function() {},
+      /** ================================================================== **/
+      /**                     CONSTRUCTORS / DESTRUCTORS                     **/
 
+      /**
+       * Default constructor. Calls `_emptyAllProperties`.
+       *
+       * @method factoryImpl
+       */
+      factoryImpl: function() {
+        this._emptyAllProperties();
+      },
+
+      /**
+       * Calls `_emptyAllProperties`.
+       *
+       * @method ready
+       **/
+      ready: function() {
+        this._emptyAllProperties();
+      },
+
+      /**
+       *
+       *
+       * @method attached
+       **/
       attached: function() {},
+
+      /**
+       * Stop the downloads and calls `_emptyAllProperties`.
+       * Also calls `clear` on the pixijs component.
+       *
+       * @method ready
+       */
+      clear: function(){
+        this._emptyAllProperties();
+        this.$.pixijs.clear();
+      },
+
+      /**
+       * Set all the properties to their default value.
+       *
+       * @method _emptyAllProperties
+       */
+      _emptyAllProperties: function(){
+        this.set('begin'                    , null );
+        this.set('end'                      , null );
+        this.set('isReady'                  , false);
+        this.set('format'                   , "millisecond");
+        this.set('openGl'                   , false);
+        this.set('_backgroundColor'         , 0x263238);
+        this.set('_endTileSelectedIndex'    , -1   );
+        this.set('_height'                  , 65   );
+        this.set('_intervalTileHeight'      , 24   );
+        this.set('_intervals'               , []   );
+        this.set('_isBeingSelected'         , false);
+        this.set('_lastHoverTileIndex'      , -1   );
+        this.set('_lastHoverTime'           , 0    );
+        this.set('_lastLeaveTileIndex'      , -1   );
+        this.set('_lastLeaveTime'           , 0    );
+        this.set('_maxTextElementDisplayed' , 20   );
+        this.set('_startTileSelectedIndex'  , -1   );
+        this.set('_timelineBegin'           , 0    );
+        this.set('_timelineContainer'       , null );
+        this.set('_timelineContainerHeight' , 35   );
+        this.set('_timelineContainerWidth'  , 16   );
+        this.set('_timelineContainers'      , []   );
+        this.set('_timelineEnd'             , 0    );
+        this.set('_timelineTextContainer'   , null );
+        this.set('_width'                   , 0    );
+        this.set('_zoomlineContainer'       , null );
+        this.set('_ttu'                     , new TAAABS.TimeUtilities());
+      },
+
+
 
       _onResize: function(){
         // Hide the pixijs component to retrieve the real offset bounds.
