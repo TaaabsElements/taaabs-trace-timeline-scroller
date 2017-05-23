@@ -17,8 +17,8 @@
   "main": "taaabs-trace-timeline-scroller.html",
   "license": "https://github.com/TaaabsElements/taaabs-trace-timeline-scroller/LICENSE",
   "dependencies": {
-    "polymer": "polymer/polymer",
-    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior",
+    "polymer": "Polymer/polymer#<2.*",
+    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#<2.*",
     "pixi-js-component":"https://github.com/Yepikae/pixi-js-component.git"
   },
   "devDependencies": {
